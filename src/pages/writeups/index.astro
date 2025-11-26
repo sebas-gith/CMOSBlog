@@ -6,7 +6,7 @@ import FormattedDate from '../../components/FormattedDate.astro';
 import Header from '../../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 
-const posts = (await getCollection('blog')).sort(
+const posts = (await getCollection('writeups')).sort(
     (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 ---
@@ -20,12 +20,12 @@ const posts = (await getCollection('blog')).sort(
         <Header />
         
                 <main class="max-w-4xl mx-auto px-4 mt-8 min-h-screen">
-            <h1 class="text-3xl font-bold font-sans mb-8">Todos los Blogs</h1>
-            <section class="space-y-6">
+            <h1 class="text-3xl font-bold font-sans mb-8">Todos los Writeups</h1>
+          <section class="space-y-6">
               {
                     posts.map((post) => (
                         <a 
-                            href={`/blog/${post.id}/`} 
+                            href={`/writeups/${post.id}/`} 
                             class="block p-4 rounded-lg shadow-md mb-4 hover:shadow-lg hover:bg-gray-50 transition duration-150 ease-in-out group"
                         >
                             <article class="flex justify-between items-start">
@@ -45,7 +45,7 @@ const posts = (await getCollection('blog')).sort(
                         </a>
                     ))
                 } 
-            </section>
+            </section> 
         </main>
         <Footer />
     </body>
