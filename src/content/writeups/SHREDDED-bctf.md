@@ -1,8 +1,9 @@
 ---
 title: 'Writeup SHREDED bctf'
-description: 'Writeup de bctf'
+description: 'Reconstruimos exitosamente una imagen PNG a partir del archivo `document.png.shredded` que había sido fragmentado y mezclado mediante el programa `shredder.c'
 pubDate: 'Nov 25 2025'
 heroImage: ''
+ctf: 'Backery ctf'
 ---
 
 
