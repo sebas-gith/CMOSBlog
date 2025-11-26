@@ -28,54 +28,43 @@ const ctfNames = Object.keys(groupedByCtf); // Opcional: ordenar por nombre de C
 <html lang="en">
     <head>
         <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-    </head>
+            </head>
     <body>
         <Header />
-        
-        <main class="max-w-4xl mx-auto px-4 mt-8 min-h-screen">
-            <h1 class="text-3xl font-bold font-sans mb-8">Todos los Writeups</h1>
-            <section class="space-y-8">
-
-                                {ctfNames.map((ctfName) => (
-                    <div class="border border-gray-200 rounded-lg p-4 shadow-sm">
-                        
-                                                <h2 class="text-2xl font-bold font-sans mb-4 text-blue-700 flex items-center">
-                            <span class="mr-2"></span> {ctfName}
-                        </h2>
-                        
-                                                <div class="pl-6 border-l-2 border-dashed border-gray-300 space-y-2">
-                            
-                                                        {groupedByCtf[ctfName].map((post) => (
-                                <a 
-                                    href={`/writeups/${post.id}/`} 
-                                    class="block p-3 bg-white rounded-md hover:bg-gray-50 transition duration-150 ease-in-out group relative"
-                                >
-                                                                        <div class="absolute left-[-1.6rem] top-1/2 -translate-y-1/2 w-6 h-0.5 bg-gray-300"></div>
-
-                                    <article class="flex justify-between items-start">
-                                        <div class="flex-grow pr-4 flex items-center">
-                                            <span class="mr-2 text-gray-500"></span>
-                                            <div>
-                                                <h3 class="text-lg font-medium font-sans group-hover:text-blue-600 transition">
-                                                    {post.data.title}
-                                                </h3>
-                                                <p class="text-gray-500 mt-0.5 text-xs font-serif hidden sm:block">
-                                                    {post.data.description}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        
-                                        <time class="text-xs text-gray-400 font-sans mt-0.5 whitespace-nowrap">
-                                            <FormattedDate date={post.data.pubDate} />
-                                        </time>
-                                    </article>
-                                </a>
-                            ))}
-                        </div>
-                    </div>
-                ))} 
-            </section> 
-        </main>
+               <main class="max-w-4xl mx-auto px-4 mt-8 min-h-screen">
+    <h1 class="text-3xl font-bold font-sans mb-8">Todos los Writeups</h1>
+    
+    {ctfNames.map((ctfName) => (
+        <section class="mb-10">
+            <h2 class="text-2xl font-bold font-sans mb-4 text-blue-800 border-b-2 border-blue-200 pb-2">
+                🏆 {ctfName}
+            </h2>
+            
+            <div class="space-y-4">
+                {groupedByCtf[ctfName].map((post) => (
+                    <a 
+                        href={`/writeups/${post.id}/`} 
+                        class="block p-4 rounded-lg shadow-md hover:shadow-lg hover:bg-gray-50 transition duration-150 ease-in-out group border border-gray-100"
+                    >
+                        <article class="flex justify-between items-start">
+                            <div class="flex-grow pr-4">
+                                <h3 class="text-xl font-semibold font-sans group-hover:text-blue-600 transition">
+                                    {post.data.title}
+                                </h3>
+                                <p class="text-gray-600 mt-1 text-sm font-serif">
+                                    {post.data.description}
+                                </p>
+                            </div>
+                            <time class="text-sm text-gray-400 font-sans mt-0.5 whitespace-nowrap">
+                                <FormattedDate date={post.data.pubDate} />
+                            </time>
+                        </article>
+                    </a>
+                ))}
+            </div>
+        </section>
+    ))}
+</main> 
         <Footer />
     </body>
 </html>
