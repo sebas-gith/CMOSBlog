@@ -1,15 +1,15 @@
 ---
 title: "OSINT Write-Up - Stuck In The Middle With You"
 description: 'The goal of this challenge was to identify a Tor relay based on a provided fingerprint and determine all IPv4 addresses belonging to its effective family.'
-pubDate: 'Ene 12 2025'
+pubDate: 'Jan 12 2026'
 heroImage: ''
-ctf: 'ScarletCTF
+ctf: 'ScarletCTF'
 ---
 
 ## Challenge Overview
 
 The goal of this challenge was to identify a Tor relay based on a provided fingerprint and determine all IPv4 addresses belonging to its **effective family**. The final flag required listing the IPv4 addresses of the relay and its family members, ordered from the **oldest relay to the youngest**, based on the time they were first observed on the Tor network.
-
+ 
 ---
 
 ## Initial Enumeration
@@ -21,6 +21,7 @@ A68097FE97D3065B1A6F4CE7187D753F8B8513F5
 Using a Tor metrics explorer, this fingerprint was searched to identify the corresponding relay. The relay was successfully located, revealing detailed information such as its nickname, operator contact, autonomous system, IP addresses, and fa
 mily relationships.
 
+https://metrics.1aeo.com/relay/A68097FE97D3065B1A6F4CE7187D753F8B8513F5/
 ---
 
 ## Identifying the Relay Family
