@@ -1,0 +1,94 @@
+---
+import { getCollection } from "astro:content";
+import BaseHead from "../../components/BaseHead.astro";
+import Footer from "../../components/Footer.astro";
+import FormattedDate from "../../components/FormattedDate.astro";
+import Header from "../../components/Header.astro";
+import { SITE_DESCRIPTION, SITE_TITLE } from "../../consts";
+
+const posts = (await getCollection("codes")).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+
+const getDifficultyClass = (diff : any) => {
+  switch (diff?.toLowerCase()) {
+    case 'easy': return 'bg-green-100 text-green-700 border-green-200';
+    case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+    case 'hard': return 'bg-red-100 text-red-700 border-red-200';
+    default: return 'bg-gray-100 text-gray-700 border-gray-200';
+  }
+};
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <BaseHead title={`Algoritmos | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+  </head>
+
+  <body class="bg-white text-gray-900">
+    <Header />
+
+    <main class="max-w-4xl mx-auto px-6 py-12 min-h-screen">
+      <header class="mb-12 border-b border-gray-100 pb-8">
+        <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 mb-2">
+          Code Challenges
+        </h1>
+        <p class="text-lg text-gray-500">
+          Mi bitácora de resolución de algoritmos y estructuras de datos.
+        </p>
+      </header>
+
+      <div class="grid gap-6">
+        {
+          posts.map((post) => (
+            <a
+              href={`/codes/${post.id}/`}
+              class="group block p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200"
+            >
+              <article>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div class="space-y-2">
+                    <div class="flex flex-wrap gap-2 mb-2">
+                      {post.data.platform && (
+                        <span class="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border border-blue-200 bg-blue-50 text-blue-600">
+                          {post.data.platform}
+                        </span>
+                      )}
+                      {post.data.difficulty && (
+                        <span class={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border ${getDifficultyClass(post.data.difficulty)}`}>
+                          {post.data.difficulty}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <h2 class="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                      {post.data.title}
+                    </h2>
+                    
+                    <p class="text-gray-600 line-clamp-2 text-sm leading-relaxed">
+                      {post.data.description}
+                    </p>
+                  </div>
+
+                  <div class="flex flex-row sm:flex-col items-center sm:items-end justify-between shrink-0">
+                    <time class="text-xs font-medium text-gray-400">
+                      <FormattedDate date={post.data.pubDate} />
+                    </time>
+                    <span class="mt-2 text-blue-500 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </a>
+          ))
+        }
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>
