@@ -9,39 +9,39 @@ ctf: 'upCTF'
 - **Dificultad:** *fácil*
 - **Herramientas:** *(ghidra, binary ninja, [cyberchef](https://cyberchef.io/))*
 
-### Descripcion 
+### Descripción 
 
-Este reto pide una contraseña que esta cifrada con un algoritmo XOR, nuestra tarea es desensamblar el codigo para entender el algoritmo y aplicando el mismo xor obtener la flag.
+Este reto pide una contraseña que está cifrada con un algoritmo XOR, nuestra tarea es desensamblar el código para entender el algoritmo y aplicando el mismo XOR obtener la flag.
 
 
 ### Prueba del programa
 ![Program working](../../assets/upCTF/ProgramOverview.png)
 
-Al ejecutar el programa nos damos cuenta que el programa no importa el texto que introduzcamos siempre dara segmentation fault. 
+Al ejecutar el programa nos damos cuenta de que el programa no importa el texto que introduzcamos, siempre dará segmentation fault.
 
 ---
 
-### Desencriptado
+### Desensamblado
 
-Luego de desencriptar el programa en ghidra veremos lo siguiente en la funcion main.
+Luego de desencriptar el programa en Ghidra veremos lo siguiente en la funcion *main*.
 
 ![Ghidra main function](../../assets/upCTF/mianFunctionGhidra.png)
 
-Para entender un poco mejor el codigo cambiamos los nombres de las variables.
+Para entender un poco mejor el código, cambiamos los nombres de las variables:
 
 ![Codigo Amigable](../../assets/upCTF/ExplicacionCodigo.png)
 
-Desde binary ninja miramos las variables para ver que llevan dentro (las veo desde binary ninja porque se me hace mas facil).
+Desde *Binary Ninja* miramos las variables para ver qué contienen (las veo desde Binary Ninja porque se me hace más fácil).
 
 ![Variables de encriptacion](../../assets/upCTF/data_section.png)
 
 Vemos que la variable ***encrypted_bin_len*** tiene un valor de 0x134 o 308 en decimal que corresponde al tamaño de la variable ***encrypted_bin***.
 
-Lo que nos queda por hacer teniendo todos los datos necesarios es aplicar nosotros mismo nuestro XOR para encontrar lo que realmente hay en ***encrypted_bin***
+Lo que nos queda por hacer, teniendo todos los datos necesarios, es aplicar nosotros mismos nuestro ***XOR*** para encontrar lo que realmente hay en ***encrypted_bin***
 
 ---
 
-### Descifrado de la flag
+### Descifrando de la flag
 Si vemos los bytes de la variable en [cyberchef](https://cyberchef.io/)
 
 ![cyberchef from hex variable](../../assets/upCTF/cyberchef1.png)
