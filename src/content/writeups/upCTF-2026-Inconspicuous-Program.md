@@ -23,7 +23,7 @@ Al ejecutar el programa nos damos cuenta de que el programa no importa el texto 
 
 ### Desensamblado
 
-Luego de desencriptar el programa en Ghidra veremos lo siguiente en la funcion *main*.
+Luego de desensamblar el programa en Ghidra veremos lo siguiente en la funcion *main*.
 
 ![Ghidra main function](../../assets/upCTF/mianFunctionGhidra.png)
 
