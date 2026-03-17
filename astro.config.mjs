@@ -10,6 +10,6 @@ import tailwind from '@astrojs/tailwind';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://example.com',
-  integrations: [expressiveCode({themes: ['monokai'],}), mdx(), sitemap(), tailwind()],
+  integrations: [expressiveCode({themes: ['tokyo-night', 'catppuccin-latte']}), mdx(), sitemap(), tailwind()],
 
 });

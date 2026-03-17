@@ -1,14 +1,24 @@
 ---
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
 
-type Props = CollectionEntry<'writeups'>['data'];
+interface Props extends CollectionEntry<'writeups'>['data'] {
+	id: string;
+}
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, ctf } = Astro.props;
+
+// Obtener todos los writeups para encontrar los relacionados
+const allWriteups = await getCollection('writeups');
+const currentId = Astro.props.id || '';
+const relatedWriteups = allWriteups
+	.filter((post) => post.data.ctf === ctf && post.id !== currentId)
+	.sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime());
 ---
 
 <html lang="en">
@@ -16,25 +26,97 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 		<BaseHead title={title} description={description} />
 		<style>
 			main {
-				width: calc(100% - 2em);
+				width: 100%;
 				max-width: 100%;
 				margin: 0;
 			}
+			.layout-wrapper {
+				display: block;
+				min-height: 100vh;
+				width: 100%;
+				margin: 0;
+				position: relative;
+			}
+			.main-content {
+				display: block;
+				width: 100%;
+				padding-top: 2rem;
+			}
+			.container {
+				width: 100%;
+				max-width: 720px;
+				padding: 0 1rem;
+				margin: 0 auto;
+			}
 			.hero-image {
 				width: 100%;
+				margin: 0 0 2em 0;
 			}
 			.hero-image img {
 				display: block;
 				margin: 0 auto;
 				border-radius: 12px;
 				box-shadow: var(--box-shadow);
+				max-width: 600px;
+				width: 100%;
+				height: auto;
 			}
 			.prose {
-				width: 720px;
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
-				color: rgb(var(--gray-dark));
+				width: 100%;
+				max-width: 100%;
+				margin: 0;
+				padding: 0;
+				color: var(--text-secondary);
+			}
+			.prose h1,
+			.prose h2,
+			.prose h3,
+			.prose h4,
+			.prose h5,
+			.prose h6 {
+				color: var(--text-primary);
+			}
+			.prose a {
+				color: var(--accent);
+				text-decoration: none;
+			}
+			.prose a:hover {
+				text-decoration: underline;
+			}
+			.prose code {
+				background-color: var(--bg-secondary);
+				border: 1px solid var(--border-color);
+				color: var(--text-secondary);
+				padding: 2px 5px;
+				border-radius: 2px;
+			}
+			.prose pre {
+				background-color: var(--bg-secondary);
+				border: 1px solid var(--border-color);
+				padding: 1.5em;
+				border-radius: 8px;
+				overflow-x: auto;
+			}
+			.prose blockquote {
+				border-left: 4px solid var(--accent);
+				padding: 0 0 0 20px;
+				margin: 1em 0;
+				font-style: italic;
+				color: var(--text-secondary);
+			}
+			.prose table {
+				border-collapse: collapse;
+				width: 100%;
+			}
+			.prose table td,
+			.prose table th {
+				border: 1px solid var(--border-color);
+				padding: 0.5em;
+				text-align: left;
+			}
+			.prose table th {
+				background-color: var(--bg-secondary);
+				color: var(--text-primary);
 			}
 			.title {
 				margin-bottom: 1em;
@@ -44,13 +126,155 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 			}
 			.title h1 {
 				margin: 0 0 0.5em 0;
+				color: var(--text-primary);
 			}
 			.date {
 				margin-bottom: 0.5em;
-				color: rgb(var(--gray));
+				color: var(--text-tertiary);
+				font-size: 0.95em;
 			}
 			.last-updated-on {
 				font-style: italic;
+				margin-top: 0.5em;
+			}
+			.sidebar {
+				padding: 0;
+				background: transparent;
+				border: none;
+				border-radius: 0;
+				max-height: fit-content;
+				margin: 3em 0 0 0;
+			}
+			.sidebar-wrapper {
+				position: absolute; /* Crucial: bounded by layout-wrapper */
+				top: 0;
+				bottom: 0;
+				left: 0;
+				width: 300px;
+				z-index: 40;
+				transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+				pointer-events: none; /* Let clicks pass through empty wrapper space */
+			}
+			.sidebar-wrapper.collapsed {
+				transform: translateX(-100%);
+			}
+			.sidebar-inner {
+				position: sticky;
+				top: 0;
+				width: 100%; 
+				height: 100vh;
+				overflow-y: auto;
+				padding: 6rem 1.5rem 2rem 1.5rem;
+				border-right: 1px solid var(--border-color);
+				background-color: var(--bg-primary);
+				pointer-events: auto; /* Re-enable clicks for sidebar content */
+			}
+			.sidebar-toggle {
+				position: sticky;
+				bottom: 2rem;
+				left: 2rem;
+				margin-top: calc(100vh - 5.5rem - 6rem); /* Position roughly at bottom of viewport */
+				z-index: 50;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 3.5rem;
+				height: 3.5rem;
+				border-radius: 50%;
+				background-color: var(--bg-secondary);
+				color: var(--text-primary);
+				border: 1px solid var(--border-color);
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+				cursor: pointer;
+				transition: transform 0.2s, background-color 0.2s;
+				pointer-events: auto;
+			}
+			.sidebar-toggle:hover {
+				transform: scale(1.05);
+				background-color: var(--accent);
+				color: white;
+			}
+			@media (max-width: 1350px) {
+				.layout-wrapper {
+					flex-direction: column;
+				}
+				.sidebar-wrapper {
+					position: static; 
+					width: 100%;
+					height: auto;
+				}
+				.sidebar-inner {
+					position: static;
+					width: 100%;
+					height: auto;
+					padding: 4rem 1rem 4rem 1rem;
+					border-right: none;
+					border-top: 2px dashed var(--border-color); 
+				}
+				.sidebar-toggle {
+					display: none !important; 
+				}
+			}
+			.sidebar-inner h3 {
+				margin: 0 0 1em 0;
+				font-size: 1.1em;
+				color: var(--text-primary);
+				padding-bottom: 0.5em;
+				padding-left: 0.5em;
+				opacity: 0.8;
+				font-weight: 700;
+			}
+			.sidebar-inner ul {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+			}
+			.sidebar-inner li {
+				margin-bottom: 0.25em;
+			}
+			.sidebar-inner a {
+				color: var(--text-secondary);
+				text-decoration: none;
+				font-size: 0.95em;
+				display: block;
+				padding: 0.5em 1em;
+				border-radius: 8px;
+				border-left: none;
+				transition: background-color 0.2s ease, color 0.2s ease;
+			}
+			.sidebar-inner a.btn-back {
+				display: inline-block;
+				margin-bottom: 2rem;
+				font-size: 0.9em;
+				color: var(--accent);
+				font-weight: bold;
+				border: 1px solid var(--accent);
+				padding: 0.5rem 1rem;
+				border-radius: 8px;
+				transition: background-color 0.2s ease, color 0.2s ease;
+			}
+			.sidebar-inner a.btn-back:hover {
+				background-color: var(--accent);
+				color: white;
+			}
+			.no-related {
+				color: var(--text-tertiary);
+				font-size: 0.9em;
+				font-style: italic;
+			}
+			@media (max-width: 720px) {
+				.container {
+					padding: 1em;
+				}
+				.prose {
+					padding: 0;
+				}
+				.hero-image {
+					margin: 0 0 1em 0;
+				}
+				.sidebar {
+					margin: 2em 0 0 0;
+				}
 			}
 		</style>
 	</head>
@@ -58,31 +282,84 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 	<body>
 		<Header />
 		<main>
-			<article>
-				<div class="hero-image">
-					{heroImage && <Image width={650} height={210} src={heroImage} alt="" />}
-				</div>
-				<div class="prose">
-					<div class="title">
-						<div class="date">
-							<FormattedDate date={pubDate} />
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
+			<div class="layout-wrapper">
+				<div class="main-content">
+					<div class="container">
+					<div class="hero-image">
+						{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
+					</div>
+					<article class="prose">
+						<div class="title">
+							<div class="date">
+								<FormattedDate date={pubDate} />
+								{
+									updatedDate && (
+										<div class="last-updated-on">
+											Última actualización el <FormattedDate date={updatedDate} />
+										</div>
+									)
+								}
+							</div>
+							<h1>{title}</h1>
+							<hr />
 						</div>
-						<h1>{title}</h1>
-						<hr />
-					</div>
-					<div class="prose prose-lg prose-serif prose-headings:font-sans mx-auto text-gray-800">
-						<slot />
+						<div class="prose prose-lg prose-serif prose-headings:font-sans mx-auto dark:prose-invert">
+							<slot />
+						</div>
 					</div>
 				</div>
-			</article>
+                
+				{
+					relatedWriteups.length > 0 && (
+						<>
+							<div class="sidebar-wrapper" id="writeup-sidebar-wrapper">
+								<aside class="sidebar-inner bg-transparent">
+									<a href="/writeups/" class="btn-back">⬅ Volver a Writeups</a>
+									<h3 class="text-xl font-bold font-sans dark:text-[#e4e4e7] mb-4 border-b-2 border-accent/50 pb-2">Otros writeups ({ctf})</h3>
+									<ul class="space-y-2">
+										{relatedWriteups.map((post) => (
+											<li>
+												<a href={`/writeups/${post.id}/`} class="block py-2 px-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a30] transition-colors text-gray-600 hover:text-gray-900 dark:text-[#a1a1aa] hover:dark:text-[#e4e4e7] no-underline">{post.data.title}</a>
+											</li>
+										))}
+									</ul>
+								</aside>
+							</div>
+							<button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle Sidebar">
+								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="toggle-icon">
+									<line x1="3" y1="12" x2="21" y2="12"></line>
+									<line x1="3" y1="6" x2="21" y2="6"></line>
+									<line x1="3" y1="18" x2="21" y2="18"></line>
+								</svg>
+							</button>
+						</>
+					)
+				}
+			</div>
 		</main>
 		<Footer />
+		<script is:inline>
+			document.addEventListener("DOMContentLoaded", () => {
+				const sidebarWrapper = document.getElementById("writeup-sidebar-wrapper");
+				const toggleBtn = document.getElementById("sidebar-toggle");
+				
+				if (!sidebarWrapper || !toggleBtn) return;
+				
+				// Optional logic for hiding elements inside instead of wrapping just in case desktop needs it.
+				// Not removing DOM logic entirely but ensuring CSS handles toggle.
+
+				// Comprobar preferencia guardada
+				const isSidebarClosed = localStorage.getItem("writeup-sidebar-closed") === "true";
+				if (isSidebarClosed) {
+					sidebarWrapper.classList.add("collapsed");
+				}
+
+				toggleBtn.addEventListener("click", () => {
+					sidebarWrapper.classList.toggle("collapsed");
+					const isNowClosed = sidebarWrapper.classList.contains("collapsed");
+					localStorage.setItem("writeup-sidebar-closed", isNowClosed ? "true" : "false");
+				});
+			});
+		</script>
 	</body>
 </html>

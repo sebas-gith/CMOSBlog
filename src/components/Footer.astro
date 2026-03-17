@@ -3,7 +3,7 @@ const today = new Date();
 ---
 
 <footer>
-	&copy; {today.getFullYear()} Sebastian Alvarez. ® All rights reserved.
+	&copy; {today.getFullYear()} Sebastian Alvarez. ® Todos los derechos reservados.
 	<div class="social-links">
 		<a href="https://www.linkedin.com/in/sebastian-g-alvarez-c/" target="_blank">
                 <span class="sr-only">Go to CMOS' LinkedIn profile</span>
@@ -34,8 +34,11 @@ const today = new Date();
 	footer {
 		padding: 2em 1em 6em 1em;
 		background: linear-gradient(var(--gray-gradient)) no-repeat;
-		color: rgb(var(--gray));
+		color: var(--text-secondary);
 		text-align: center;
+		transition: color 0.3s ease;
+		position: relative;
+		z-index: 50;
 	}
 	.social-links {
 		display: flex;
@@ -45,9 +48,10 @@ const today = new Date();
 	}
 	.social-links a {
 		text-decoration: none;
-		color: rgb(var(--gray));
+		color: var(--text-secondary);
+		transition: color 0.3s ease;
 	}
 	.social-links a:hover {
-		color: rgb(var(--gray-dark));
+		color: var(--accent);
 	}
 </style>

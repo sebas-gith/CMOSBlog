@@ -28,7 +28,7 @@ const otherWriteups = allPosts.slice(1);
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 	</head>
-	<body class="bg-white text-gray-800 min-h-screen">
+	<body class="min-h-screen">
 		<Header />
 		
 		<main class="max-w-4xl mx-auto px-4 py-12">
@@ -39,12 +39,12 @@ const otherWriteups = allPosts.slice(1);
                         Último blog 
                     </h2>
                     
-                    <a href={`/blog/${featuredPost.id}/`} class="block p-6 bg-gray-50 hover:bg-gray-100 transition duration-300 rounded-xl shadow-lg hover:shadow-xl">
+                    <a href={`/blog/${featuredPost.id}/`} class="block p-6 border border-transparent dark:border-[#2a2a30] bg-gray-50 dark:bg-[#1a1a20] hover:bg-gray-100 dark:hover:bg-[#2a2a30] transition duration-300 rounded-xl shadow-lg dark:shadow-none hover:shadow-xl dark:hover:shadow-none">
                         <article>
                             <div class="flex flex-col md:flex-row md:items-start">
                                 <!-- Contenido del Post Destacado -->
                                 <div class="md:w-3/4 pr-0 md:pr-8">
-                                    <h2 class="text-2xl font-extrabold font-sans text-gray-900 mb-2 group-hover:text-blue-700">
+                                    <h2 class="text-2xl font-extrabold font-sans text-gray-900 dark:text-[#e4e4e7] mb-2 group-hover:text-blue-700">
                                         {featuredPost.data.title}
                                     </h2>
                                     <p class="text-lg text-gray-600 font-serif mb-4">
@@ -76,12 +76,12 @@ const otherWriteups = allPosts.slice(1);
                         Último Writeup
                     </h2>
                     
-                    <a href={`/writeups/${featuredWriteups.id}/`} class="block p-6 bg-gray-50 hover:bg-gray-100 transition duration-300 rounded-xl shadow-lg hover:shadow-xl">
+                    <a href={`/writeups/${featuredWriteups.id}/`} class="block p-6 border border-transparent dark:border-[#2a2a30] bg-gray-50 dark:bg-[#1a1a20] hover:bg-gray-100 dark:hover:bg-[#2a2a30] transition duration-300 rounded-xl shadow-lg dark:shadow-none hover:shadow-xl dark:hover:shadow-none">
                         <article>
                             <div class="flex flex-col md:flex-row md:items-start">
                                 <!-- Contenido del Post Destacado -->
                                 <div class="md:w-3/4 pr-0 md:pr-8">
-                                    <h2 class="text-2xl font-extrabold font-sans text-gray-900 mb-2 group-hover:text-blue-700">
+                                    <h2 class="text-2xl font-extrabold font-sans text-gray-900 dark:text-[#e4e4e7] mb-2 group-hover:text-blue-700">
                                         {featuredWriteups.data.title}
                                     </h2>
                                     <p class="text-lg text-gray-600 font-serif mb-4">

@@ -27,11 +27,11 @@ const posts = (await getCollection("blog")).sort(
           posts.map((post) => (
             <a
               href={`/blog/${post.id}/`}
-              class="block p-4 rounded-lg shadow-md mb-4 hover:shadow-lg hover:bg-gray-50 transition duration-150 ease-in-out group"
+              class="block p-4 rounded-lg shadow-md dark:shadow-none border border-transparent dark:border-[#2a2a30] mb-4 hover:shadow-lg dark:hover:shadow-none hover:bg-gray-50 dark:hover:bg-[#2a2a30] transition duration-150 ease-in-out group"
             >
               <article class="flex justify-between items-start">
                 <div class="flex-grow pr-4">
-                  <h2 class="text-xl font-semibold font-sans group-hover:text-blue-600 transition">
+                  <h2 class="text-xl font-semibold font-sans group-hover:text-blue-600 dark:text-[#e4e4e7] transition">
                                                             {post.data.title}   
                   </h2>
                                                                                

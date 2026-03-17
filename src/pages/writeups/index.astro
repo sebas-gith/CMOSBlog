@@ -38,7 +38,7 @@ const ctfNames = Object.keys(groupedByCtf); // Opcional: ordenar por nombre de C
       <section class="space-y-8">
         {
           ctfNames.map((ctfName) => (
-            <div class="border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div class="border border-gray-200 dark:border-[#2a2a30] rounded-lg p-4 shadow-sm dark:shadow-none">
                                                                                
               <h2 class="text-2xl font-bold font-sans mb-4 -flex items-center">
                                             <span class="mr-2" /> {ctfName}     
@@ -47,14 +47,14 @@ const ctfNames = Object.keys(groupedByCtf); // Opcional: ordenar por nombre de C
                 {groupedByCtf[ctfName].map((post) => (
                   <a
                     href={`/writeups/${post.id}/`}
-                    class="block p-3 bg-white rounded-md hover:bg-gray-50 transition duration-150 ease-in-out group relative"
+                    class="block p-3 bg-white dark:bg-[#1a1a20] rounded-md hover:bg-gray-50 dark:hover:bg-[#2a2a30] transition duration-150 ease-in-out group relative"
                   >
                     <div class="absolute left-[-1.6rem] top-1/2 -translate-y-1/2 w-6 h-0.5 bg-gray-300" />
                     <article class="flex justify-between items-start">
                       <div class="flex-grow pr-4 flex items-center">
                         <span class="mr-2 text-gray-500" />                     
                         <div>
-                          <h3 class="text-lg font-medium font-sans group-hover:text-blue-600 transition">
+                          <h3 class="text-lg font-medium font-sans group-hover:text-blue-600 dark:text-[#e4e4e7] transition">
                             {post.data.title}                                   
                           </h3>
                           <p class="text-gray-500 mt-0.5 text-xs font-serif hidden sm:block">

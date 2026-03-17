@@ -1,0 +1,85 @@
+---
+// LanguageToggle.astro - Componente para cambiar idioma
+---
+
+<button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">
+	<span class="lang-text">EN</span>
+</button>
+
+<style>
+	.lang-toggle {
+		background: none;
+		border: 1px solid var(--accent);
+		cursor: pointer;
+		padding: 0.5em 0.75em;
+		color: var(--accent);
+		font-weight: 600;
+		border-radius: 4px;
+		transition: all 0.3s ease;
+		font-size: 0.875em;
+		min-width: 40px;
+		text-align: center;
+	}
+
+	.lang-toggle:hover {
+		background-color: var(--accent);
+		color: var(--bg-primary);
+	}
+
+	.lang-toggle:active {
+		transform: scale(0.95);
+	}
+
+	.lang-text {
+		display: inline-block;
+		min-width: 25px;
+		text-align: center;
+	}
+</style>
+
+<script is:inline>
+	const LANGUAGES = { en: 'English', es: 'Español' };
+	const DEFAULT_LANG = 'en';
+
+	function initLanguage() {
+		const storedLang = localStorage.getItem('language') || DEFAULT_LANG;
+		updateLanguageUI(storedLang);
+		document.documentElement.setAttribute('data-lang', storedLang);
+	}
+
+	function updateLanguageUI(lang) {
+		const toggle = document.getElementById('lang-toggle');
+		if (toggle) {
+			const langText = toggle.querySelector('.lang-text');
+			if (langText) {
+				langText.textContent = lang.toUpperCase();
+			}
+		}
+	}
+
+	function getCurrentLanguage() {
+		return localStorage.getItem('language') || DEFAULT_LANG;
+	}
+
+	function getNextLanguage(current) {
+		return current === 'en' ? 'es' : 'en';
+	}
+
+	initLanguage();
+
+	document.addEventListener('DOMContentLoaded', () => {
+		const toggle = document.getElementById('lang-toggle');
+		if (toggle) {
+			toggle.addEventListener('click', () => {
+				const currentLang = getCurrentLanguage();
+				const nextLang = getNextLanguage(currentLang);
+				localStorage.setItem('language', nextLang);
+				document.documentElement.setAttribute('data-lang', nextLang);
+				updateLanguageUI(nextLang);
+				window.dispatchEvent(new CustomEvent('language-changed', { detail: { lang: nextLang } }));
+			});
+		}
+	});
+
+	document.addEventListener('astro:after-swap', initLanguage);
+</script>

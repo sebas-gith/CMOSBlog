@@ -27,12 +27,12 @@ const getDifficultyClass = (diff : any) => {
     <BaseHead title={`Algoritmos | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
   </head>
 
-  <body class="bg-white text-gray-900">
+  <body class="min-h-screen">
     <Header />
 
     <main class="max-w-4xl mx-auto px-6 py-12 min-h-screen">
       <header class="mb-12 border-b border-gray-100 pb-8">
-        <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 mb-2">
+        <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-[#e4e4e7] mb-2">
           Code Challenges
         </h1>
         <p class="text-lg text-gray-500">
@@ -45,7 +45,7 @@ const getDifficultyClass = (diff : any) => {
           posts.map((post) => (
             <a
               href={`/codes/${post.id}/`}
-              class="group block p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200"
+              class="group block p-6 bg-white dark:bg-[#1a1a20] border border-gray-200 dark:border-[#2a2a30] rounded-xl shadow-sm dark:shadow-none hover:shadow-md dark:hover:shadow-none hover:border-blue-300 transition-all duration-200"
             >
               <article>
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -63,7 +63,7 @@ const getDifficultyClass = (diff : any) => {
                       )}
                     </div>
                     
-                    <h2 class="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                    <h2 class="text-xl font-bold text-gray-800 dark:text-[#e4e4e7] group-hover:text-blue-600 transition-colors">
                       {post.data.title}
                     </h2>
                     
