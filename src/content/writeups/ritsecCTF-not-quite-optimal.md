@@ -1,7 +1,7 @@
 ---
 title: "Not Quite Optimal"
 description: 'Un binario troll que te pide rogarle por la flag y ejecuta una operación matemática absurdamente gigante que agota la RAM. Para resolverlo, combiné reversing clásico con la ayuda de IA para bypassear el cálculo infinito usando teoría de números.'
-pubDate: '5-4-2026'
+pubDate: '4-5-2026'
 heroImage: ''
 ctf: 'ritsecCTF'
 ---
