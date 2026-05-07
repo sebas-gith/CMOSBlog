@@ -1,0 +1,86 @@
+---
+const { lat, lon, popuptext = "A very good place!", zoom = 39} = Astro.props;
+---
+
+<div id="leaflet-map" data-lat={lat} data-lon={lon} data-popuptext={popuptext} data-zoom={zoom}>
+</div>
+
+<script is:inline>
+  (() => {
+    const mapElement = document.getElementById("leaflet-map");
+
+    if (!mapElement) return;
+
+    const lat = parseFloat(mapElement.dataset.lat);
+    const lon = parseFloat(mapElement.dataset.lon);
+    const popupText = mapElement.dataset.popuptext;
+    const zoom = parseInt(mapElement.dataset.zoom);
+
+    function createMap() {
+      if (mapElement._leaflet_map) return;
+
+      const map = L.map(mapElement).setView([lat, lon], zoom);
+
+      mapElement._leaflet_map = map;
+
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      L.marker([lat, lon]).addTo(map).bindPopup(popupText).openPopup();
+
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+
+      L.circle([lat, lon], {
+        color: "#550BDE",
+        fillColor: "#DABEED",
+        fillOpacity: 0.5,
+        radius: 20,
+      }).addTo(map);
+    }
+
+    if (window.L) {
+      createMap();
+      return;
+    }
+
+    if (!window._leaflet_loading) {
+      window._leaflet_loading = true;
+
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+
+      script.onload = () => {
+        createMap();
+      };
+
+      document.body.appendChild(script);
+    } else {
+      const interval = setInterval(() => {
+        if (window.L) {
+          clearInterval(interval);
+          createMap();
+        }
+      }, 50);
+    }
+  })();
+</script>
+
+<style is:inline>
+  #leaflet-map {
+    height: 400px;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 2rem 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  }
+</style>
