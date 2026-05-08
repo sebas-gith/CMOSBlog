@@ -1,0 +1,30 @@
+---
+title: "Gunnar's Vacation Bis - Picture 2"
+description: 'A Geoguessr style challenge'
+pubDate: 'May 7 2026'
+heroImage: '../../assets/THcon/osint-2.gif'
+ctf: 'THCON-2026'
+---
+
+So yeah, we're clearly in some random place in France…
+
+At first I tried searching for the church. But then I noticed this:
+
+![osint 2 place](../../assets/THcon/osint2.png)
+
+So I just threw it into Google Images.
+
+![osint 2 google images](../../assets/THcon/osint2-lyonHotel.png)
+
+And… bingo. Had the exact spot.
+
+import LeafletMap from '../../components/LeafletMap.astro'
+
+
+<LeafletMap lat={45.74504546759622} lon={4.823240241967142} popuptext={"Lyon, France"}/>
+
+## Flag
+
+```sh
+THC{r3v3r53_534rch_7h15_bl4nd1n3}
+```
