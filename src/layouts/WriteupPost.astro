@@ -7,7 +7,9 @@ import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
 
-interface Props extends CollectionEntry<'writeups'>['data'] {
+type WriteupData = CollectionEntry<'writeups'>['data'];
+
+interface Props extends WriteupData {
 	id: string;
 }
 
@@ -306,7 +308,8 @@ const relatedWriteups = allWriteups
 						<div class="prose prose-lg prose-serif prose-headings:font-sans mx-auto dark:prose-invert">
 							<slot />
 						</div>
-					</div>
+					</article>
+				</div>
 				</div>
                 
 				{
@@ -345,10 +348,7 @@ const relatedWriteups = allWriteups
 				
 				if (!sidebarWrapper || !toggleBtn) return;
 				
-				// Optional logic for hiding elements inside instead of wrapping just in case desktop needs it.
-				// Not removing DOM logic entirely but ensuring CSS handles toggle.
 
-				// Comprobar preferencia guardada
 				const isSidebarClosed = localStorage.getItem("writeup-sidebar-closed") === "true";
 				if (isSidebarClosed) {
 					sidebarWrapper.classList.add("collapsed");
